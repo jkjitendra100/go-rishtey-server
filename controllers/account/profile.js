@@ -341,11 +341,11 @@ export const deleteProfile = async (req, res, next) => {
 
 export const deleteImage = async (req, res, next) => {
   try {
-    const { docUrl } = req.query;
+    const { id } = req.params;
 
-    const profile = await Profile.find({ userId: req?.user?._id });
+    const profile = await Profile.findOne({ userId: req?.user?._id });
 
-    let updatedImages = profile?.images?.filter((e) => e?.docUrl !== docUrl);
+    let updatedImages = profile?.images?.filter((e) => e?._id != id);
 
     await Profile.updateOne(
       { userId: req?.user?._id },
@@ -356,6 +356,27 @@ export const deleteImage = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Image deleted successfully",
+      data: user,
+    });
+  } catch (e) {
+    return next(new ErrorHandler(e.message, 500));
+  }
+};
+
+export const updateUserImage = async (req, res, next) => {
+  try {
+    const { userImage } = req.body;
+
+    const profile = await Profile.findOneAndUpdate(
+      { userId: req?.user?._id },
+      { $push: { images: { $each: userImage } } },
+      { new: true }
+    );
+
+    const user = await User.findById(req?.user?._id).populate("profile");
+    res.status(200).json({
+      success: true,
+      message: "Image updated successfully",
       data: user,
     });
   } catch (e) {

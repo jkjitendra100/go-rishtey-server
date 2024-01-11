@@ -11,6 +11,7 @@ import {
   uploadBytesResumable,
   deleteObject,
 } from "firebase/storage";
+import Profile from "../../models/account/profile.js";
 
 // Register user
 export const registerUser = async (req, res, next) => {
@@ -64,7 +65,7 @@ export const sendOtp = async (req, res, next) => {
     if (!existingUser)
       return next(new ErrorHandler(`"${mobile}" is not registered`, 404));
 
-    let otp = Math.ceil(Math.random() * 10000);
+    let otp = Math.floor(1000 + Math.random() * 9000);
     await User.findOneAndUpdate(
       { mobile: Number(mobile) },
       { otp: otp, otpValidity: Date.now() + 15 * 60 * 1000 },
@@ -354,10 +355,16 @@ export const updateRole = async (req, res, next) => {
 export const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
-
     if (!user) return next(new ErrorHandler("User not found", 400));
 
+    await Profile.findOneAndDelete({ userId: req.params.id });
+
     await user.deleteOne();
+
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
 
     res
       .status(200)
@@ -454,40 +461,9 @@ export const getMyPhotos = async (req, res, next) => {
 };
 
 export const deletePhoto = async (req, res, next) => {
+  const { imageId } = req.params;
+  console.log(imageId);
   try {
-    const user = await User.findById(req?.user?._id);
-    if (!user) {
-      return next(new ErrorHandler("User not found", 404));
-    }
-
-    const fileId = req.params?.id;
-    console.log(fileId);
-    const fileObject = user?.images?.find((e) => e?._id == fileId);
-    if (!fileObject) return next(new ErrorHandler("File not found", 404));
-
-    console.log(fileObject?.docPath);
-
-    const storage = getStorage();
-    const imageRef = ref(storage, fileObject?.docPath);
-    // Delete file
-    deleteObject(imageRef)
-      .then(async () => {
-        const userImages = user?.images;
-        let updatedImages = userImages?.filter(
-          (e) => e?._id !== fileObject?._id
-        );
-
-        user.images = updatedImages;
-        await user?.save();
-
-        res.status(200).json({
-          success: true,
-          message: "File deleted successfully",
-        });
-      })
-      .catch((e) => {
-        return next(new ErrorHandler(e?.message, 500));
-      });
   } catch (e) {
     return next(new ErrorHandler(e.message, 500));
   }
@@ -574,13 +550,12 @@ export const searchUserByCustomId = async (req, res, next) => {
     ]);
 
     if (user?.length === 0) {
-      return next(new ErrorHandler("Profile Not Found", 400)
-    )
+      return next(new ErrorHandler("Profile Not Found", 400));
     }
     if (user?.customId === Number(customId))
       return next(new ErrorHandler("you can find only other user", 400));
 
-    res.status(200).send({ success: true, data:user });
+    res.status(200).send({ success: true, data: user });
   } catch (e) {
     return next(new ErrorHandler(e.message, 500));
   }

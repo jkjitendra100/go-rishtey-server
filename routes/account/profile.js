@@ -8,6 +8,7 @@ import {
   getMyProfile,
   getUserProfile,
   updateProfile,
+  updateUserImage,
 } from "../../controllers/account/profile.js";
 import isAuthenticated from "../../middlewares/isAuthenticated.js";
 
@@ -20,6 +21,7 @@ router.get("/all", isAuthenticated, getAllUsersProfile);
 router.get("/:id", isAuthenticated, getUserProfile);
 router.get("/genderWise/:gender", isAuthenticated, getGenderWiseUsersProfile);
 router.delete("/delete", isAuthenticated, deleteProfile);
-router.delete("/image", isAuthenticated, deleteImage);
+router.delete("/image/:id", isAuthenticated, deleteImage);
+router.put("/image", isAuthenticated, updateUserImage);
 
 export default router;
