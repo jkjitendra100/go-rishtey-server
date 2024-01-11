@@ -320,7 +320,7 @@ export const getGenderWiseUsersProfile = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Profiles found",
-      data: profile,
+      data: profile?.filter((e) => e?.profile?.length !== 0),
     });
   } catch (e) {
     return next(new ErrorHandler(e?.message, 500));
