@@ -218,8 +218,6 @@ export const getAllUsersProfile = async (req, res, next) => {
 
 export const getUserProfile = async (req, res, next) => {
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id))
-    return next(new ErrorHandler("Invalid ID", 400));
 
   try {
     const profile = await User.findById(id).populate("profile");
@@ -236,10 +234,15 @@ export const getUserProfile = async (req, res, next) => {
 // Here i am fetching gender wise documents from users, connects and profiles collections
 export const getGenderWiseUsersProfile = async (req, res, next) => {
   const { gender } = req.params; // Male or Female
+
+  let oppositeGender = "";
+  if (gender === "Male") oppositeGender = "Female";
+  if (gender === "Female") oppositeGender = "Male";
+
   try {
     const profile = await User.aggregate([
       {
-        $match: { gender: gender },
+        $match: { gender: oppositeGender },
       },
       {
         $lookup: {

@@ -4,6 +4,7 @@ import bcryptjs from "bcryptjs";
 import validator from "validator";
 import sendToken from "../../utils/sendToken.js";
 import sendEmail from "../../utils/sendEmail.js";
+import jwt from "jsonwebtoken";
 import {
   getStorage,
   ref,
@@ -12,11 +13,37 @@ import {
   deleteObject,
 } from "firebase/storage";
 import Profile from "../../models/account/profile.js";
+import user from "../../models/account/user.js";
 
 // Register user
 export const registerUser = async (req, res, next) => {
   try {
-    const { profileFor, gender, name, email, mobile } = req.body;
+    const {
+      profileFor,
+      gender,
+      name,
+      email,
+      mobile,
+      dob,
+      motherTongue,
+      community,
+      maritalStatus,
+      height,
+      state,
+      city,
+      pinCode,
+      highestDegree,
+      jobTitle,
+      employedIn,
+      annualIncome,
+      familyType,
+      fatherStatus,
+      motherStatus,
+      noOfBrothers,
+      noOfSisters,
+      familyLivingIn,
+      images,
+    } = req.body;
 
     // Check if the user already exists based on the email
     const existingUserMobile = await User.findOne({ mobile });
@@ -44,8 +71,79 @@ export const registerUser = async (req, res, next) => {
       customId: countDocuments + 1001,
     });
 
+    const profile = await Profile.create({
+      dob,
+      motherTongue,
+      community,
+      maritalStatus,
+      height,
+      state,
+      city,
+      pinCode,
+      highestDegree,
+      jobTitle,
+      employedIn,
+      annualIncome,
+      familyType,
+      fatherStatus,
+      motherStatus,
+      noOfBrothers,
+      noOfSisters,
+      familyLivingIn,
+      images,
+      userId: user?._id,
+    });
+
+    user.profile = profile._id;
+
+    await user.save();
+
     sendToken(user, 201, res, "User registered successfully");
     // }
+  } catch (e) {
+    return next(new ErrorHandler(e.message, 500));
+  }
+};
+
+export const checkExistingUser = async (req, res, next) => {
+  try {
+    const { email, mobile } = req.body;
+
+    const userByEmail = await User.findOne({ email: email });
+    if (userByEmail) {
+      return next(new ErrorHandler(`${email} already exists!`));
+    }
+
+    const userByMobile = await User.findOne({ mobile: mobile });
+    if (userByMobile) {
+      return next(new ErrorHandler(`${mobile} already exists!`));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Valid user",
+    });
+  } catch (e) {
+    return next(new ErrorHandler(e.message, 500));
+  }
+};
+
+export const checkToken = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    if (!token) {
+      return next(new ErrorHandler("Token not found", 404));
+    }
+
+    const { id } = jwt.verify(token, process.env.JET_SECRET);
+    if (!id) {
+      return next(new ErrorHandler("Invalid token", 400));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Token verified",
+    });
   } catch (e) {
     return next(new ErrorHandler(e.message, 500));
   }
@@ -57,13 +155,6 @@ export const sendOtp = async (req, res, next) => {
     const { mobile } = req.body;
 
     if (!mobile) return next(new ErrorHandler("Mobile no. is not valid", 400));
-
-    const existingUser = await User.findOne({
-      mobile: Number(mobile),
-    });
-
-    if (!existingUser)
-      return next(new ErrorHandler(`"${mobile}" is not registered`, 404));
 
     let otp = Math.floor(1000 + Math.random() * 9000);
     await User.findOneAndUpdate(
