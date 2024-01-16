@@ -90,7 +90,7 @@ export const registerUser = async (req, res, next) => {
       noOfBrothers,
       noOfSisters,
       familyLivingIn,
-      images,
+      images: images?.length > 0 ? images : [],
       userId: user?._id,
     });
 
@@ -445,7 +445,7 @@ export const updateRole = async (req, res, next) => {
 // Delete user
 export const deleteUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.user._id);
     if (!user) return next(new ErrorHandler("User not found", 400));
 
     await Profile.findOneAndDelete({ userId: req.params.id });

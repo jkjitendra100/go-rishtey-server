@@ -370,7 +370,7 @@ export const updateUserImage = async (req, res, next) => {
   try {
     const { userImage } = req.body;
 
-    const profile = await Profile.findOneAndUpdate(
+    await Profile.findOneAndUpdate(
       { userId: req?.user?._id },
       { $push: { images: { $each: userImage } } },
       { new: true }

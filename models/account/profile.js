@@ -90,11 +90,9 @@ const profileSchema = new mongoose.Schema({
     {
       docPath: {
         type: String,
-        required: [true, "path required"],
       },
       docUrl: {
         type: String,
-        required: [true, "URL required"],
       },
     },
   ],

@@ -21,7 +21,7 @@ router.get("/all", isAuthenticated, getAllUsersProfile);
 router.get("/:id", isAuthenticated, getUserProfile);
 router.get("/genderWise/:gender", isAuthenticated, getGenderWiseUsersProfile);
 router.delete("/delete", isAuthenticated, deleteProfile);
-router.delete("/image/:id", isAuthenticated, deleteImage);
+router.delete("/image/:id", isAuthenticated, deleteImage); // Image id to be deleted
 router.put("/image", isAuthenticated, updateUserImage);
 
 export default router;

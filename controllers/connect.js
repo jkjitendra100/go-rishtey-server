@@ -217,12 +217,12 @@ export const getConnectionRequestsToMe = async (req, res, next) => {
 
     const connectionRequests = await Connect.aggregate([
       {
-        $match: { receiverId: req?.user?._id },
+        $match: { receiverId: req?.user?._id, status: "sent" },
       },
       {
         $lookup: {
           from: "profiles",
-          let: { userId: "$receiverId" },
+          let: { userId: "$senderId" },
           pipeline: [
             {
               $match: {
@@ -238,7 +238,7 @@ export const getConnectionRequestsToMe = async (req, res, next) => {
       {
         $lookup: {
           from: "shortlists",
-          let: { userId: req?.user?._id, shortlistedUserId: "$receiverId" },
+          let: { userId: req?.user?._id, shortlistedUserId: "$senderId" },
           pipeline: [
             {
               $match: {
@@ -257,7 +257,92 @@ export const getConnectionRequestsToMe = async (req, res, next) => {
       {
         $lookup: {
           from: "users",
-          let: { userId: "$receiverId" },
+          let: { userId: "$senderId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", "$$userId"],
+                },
+              },
+            },
+          ],
+          as: "user",
+        },
+      },
+      {
+        $lookup: {
+          from: "connects",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", "$$userId"],
+                },
+              },
+            },
+          ],
+          as: "connection",
+        },
+      },
+    ]);
+
+    res.status(201).json({
+      success: true,
+      message: "Requests found",
+      data: connectionRequests,
+    });
+  } catch (e) {
+    return next(new ErrorHandler(e?.message, 500));
+  }
+};
+
+export const getMyAcceptedConnections = async (req, res, next) => {
+  try {
+    const connectionRequests = await Connect.aggregate([
+      {
+        $match: { receiverId: req?.user?._id, status: "accepted" },
+      },
+      {
+        $lookup: {
+          from: "profiles",
+          let: { userId: "$senderId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$userId", "$$userId"],
+                },
+              },
+            },
+          ],
+          as: "profile",
+        },
+      },
+      {
+        $lookup: {
+          from: "shortlists",
+          let: { userId: req?.user?._id, shortlistedUserId: "$senderId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$userId", "$$userId"] },
+                    { $eq: ["$shortlistedUserId", "$$shortlistedUserId"] },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "shortlist",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          let: { userId: "$senderId" },
           pipeline: [
             {
               $match: {
@@ -300,7 +385,7 @@ export const getConnectionRequestsToMe = async (req, res, next) => {
 
 export const updateConnectionStatus = async (req, res, next) => {
   try {
-    const { status, id } = req.body; // accepted or rejected
+    const { status, id } = req.body; // accepted or rejected, Connection ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(new ErrorHandler("Invalid connection ID", 400));
     }
@@ -329,7 +414,7 @@ export const updateConnectionStatus = async (req, res, next) => {
 
 export const deleteConnection = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // Connection ID
     const connection = await Connect.findById(id);
 
     if (connection?.status === "sent") {

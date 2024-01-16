@@ -21,7 +21,6 @@ import {
   uploadPhotos,
   verifyOtp,
 } from "../../controllers/account/user.js";
-// import isAuthenticated from "../middlewares/account/isAuthenticated.js";
 import isAdmin from "../../middlewares/isAdmin.js";
 import isAuthenticated from "../../middlewares/isAuthenticated.js";
 import singleUpload from "../../middlewares/multer.js";
@@ -31,11 +30,12 @@ const router = express.Router();
 router.post("/new", registerUser);
 router.post("/login", loginUser);
 router.put("/sendOtp", sendOtp);
-router.put("/checkExistingUser", checkExistingUser);
+router.post("/checkExistingUser", checkExistingUser);
 router.put("/verifyOtp", verifyOtp);
 router.post("/logout", isAuthenticated, logout);
 router.post("/checkToken/:token", checkToken);
-router.delete("/delete/:id", isAuthenticated, deleteUser);
+router.delete("/delete/myProfile", isAuthenticated, deleteUser);
+// Firebase images from frontend
 router.post("/password/forgot", forgotPassword);
 router.put("/password/reset/:token", resetPassword);
 router.put("/password/update", isAuthenticated, updatePassword);
