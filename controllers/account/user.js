@@ -183,7 +183,7 @@ export const verifyOtp = async (req, res, next) => {
 
     const existingUser = await User.findOne({
       mobile: Number(mobile),
-    });
+    }).populate("profile");
 
     if (!existingUser)
       return next(new ErrorHandler(`"${mobile}" is not registered`, 404));

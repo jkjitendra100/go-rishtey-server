@@ -6,10 +6,7 @@ import User from "../models/account/user.js";
 export const newConnection = async (req, res, next) => {
   try {
     const { receiverId } = req.body;
-    if (!mongoose.Types.ObjectId.isValid(receiverId)) {
-      return next(new ErrorHandler("Invalid receiver ID", 400));
-    }
-
+    console.log(receiverId);
     if (req.user?._id === receiverId)
       return next(new ErrorHandler("User ID and Receiver ID are same", 400));
 

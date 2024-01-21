@@ -42,7 +42,7 @@ export const getMyShortlistedUsers = async (req, res, next) => {
   try {
     const shortlists = await Shortlist.aggregate([
       {
-        $match: { userId: req?.user?._id },
+        $match: { userId: req?.user?._id }, // Shortlisted user id
       },
       {
         $lookup: {
